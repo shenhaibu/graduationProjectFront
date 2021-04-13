@@ -1,5 +1,5 @@
 import { Message } from 'element-ui';
-let BaseUrl = 'http://localhost:3000/'
+let BaseUrl = 'http://localhost:4000/'
 let axios = require("axios")
 let instance = axios.create({
     baseURL: BaseUrl,
@@ -64,21 +64,21 @@ let deleteStadiumHttp = (_id) => {
 
 // 获得 统计 数据
 let findSubByProviderHttp = (obj) => {
-    return instance.post(`provider/findSubByProvider`,obj)
+    return instance.post(`provider/findSubByProvider`, obj)
 }
 
 
 // ==================================================================== users 端
-let getAllStadiumHttp = (region,stadName) => {
+let getAllStadiumHttp = (region, stadName) => {
     return instance.get(`users/getAllStadium?region=${region}&stadName=${stadName}`)
 }
 
-let fetchAllStadiumHttp =() => {
+let fetchAllStadiumHttp = () => {
     return instance.get(`users/fetchAllStadium`)
 }
 
 let addSubscribeHttp = (obj) => {
-    return instance.post(`users/addSubscribe`,obj)
+    return instance.post(`users/addSubscribe`, obj)
 }
 
 let findAllSubscribeHttp = () => {
@@ -90,15 +90,15 @@ let findSubscribeByUserHttp = (loginId) => {
 }
 
 let delSubscribeHttp = (_id) => {
-    return instance.post(`users/delSubscribe`,{_id})
+    return instance.post(`users/delSubscribe`, { _id })
 }
 
 let findSubscribeByRoomIdHttp = (roomId) => {
     return instance.get(`users/findSubscribeByRoomId?roomId=${roomId}`)
 }
 
-let ModifySubDateTimeHttp = (_id,date,beginTime,lastTime) => {
-    return instance.post(`users/modifySubscribeByRoomId`,{_id,date,beginTime,lastTime})
+let ModifySubDateTimeHttp = (_id, date, beginTime, lastTime) => {
+    return instance.post(`users/modifySubscribeByRoomId`, { _id, date, beginTime, lastTime })
 }
 
 let getPersonDetailHttp = () => {
@@ -106,19 +106,19 @@ let getPersonDetailHttp = () => {
 }
 
 let modifyPersonalInfoHttp = (obj) => {
-    return instance.post(`users/modifyPersonalInfo`,obj)
+    return instance.post(`users/modifyPersonalInfo`, obj)
 }
 
-let updateRateHttp = (_id,rate) => {
-    return instance.post(`users/updateRate`,{_id,rate})
+let updateRateHttp = (_id, rate) => {
+    return instance.post(`users/updateRate`, { _id, rate })
 }
 
 let getMyAllUserHttp = () => {
     return instance.post(`users/getMyAllUser`)
 }
 
-let updateRemarkAndNoticeHttp = (_id,{remark , notice}) => {
-    return instance.post(`users/updateRemarkAndNotice`,{_id,remark , notice})
+let updateRemarkAndNoticeHttp = (_id, { remark, notice }) => {
+    return instance.post(`users/updateRemarkAndNotice`, { _id, remark, notice })
 }
 
 let getNoticeHttp = () => {
@@ -129,9 +129,9 @@ let getNoticeHttp = () => {
 
 export {
     registerHttp, loginHttp, getLogInfoHttp, addStadiumHttp, getStadiumHttp, alterStadiumHttp, deleteStadiumHttp,
-    getAllStadiumHttp,addSubscribeHttp,findAllSubscribeHttp ,fetchAllStadiumHttp,findSubscribeByUserHttp,
-    delSubscribeHttp , findSubscribeByRoomIdHttp,ModifySubDateTimeHttp,getPersonDetailHttp,modifyPersonalInfoHttp,
-    findSubByProviderHttp , BaseUrl , updateRateHttp , getMyAllUserHttp ,updateRemarkAndNoticeHttp,
+    getAllStadiumHttp, addSubscribeHttp, findAllSubscribeHttp, fetchAllStadiumHttp, findSubscribeByUserHttp,
+    delSubscribeHttp, findSubscribeByRoomIdHttp, ModifySubDateTimeHttp, getPersonDetailHttp, modifyPersonalInfoHttp,
+    findSubByProviderHttp, BaseUrl, updateRateHttp, getMyAllUserHttp, updateRemarkAndNoticeHttp,
     getNoticeHttp
 
 }

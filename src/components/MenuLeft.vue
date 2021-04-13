@@ -105,7 +105,7 @@ export default class MenuLeft extends Vue {
     noticeArr = [
         {notice:"上海 体育馆 有折扣",_id:"00"},
         {notice:"南阳 体育馆 场地 有折扣哟",_id:"11"},
-        {notice:"北京 体育馆 体育馆 资源  降价了!!!  降价了!!!!  降价了!!!",_id:"11"},
+        {notice:"北京 体育馆 体育馆 资源  降价了!!!  降价了!!!!  降价了!!!",_id:"88"},
     ]
 
 

@@ -95,6 +95,12 @@
                             </el-button>
                         </el-popover>
 
+                        <el-popover>
+                            <el-button slot="reference">
+                                <el-button size="mini" type="danger" @click="addComment(scope.$index, scope.row)">评论</el-button>
+                            </el-button>
+                        </el-popover>
+
                     </template>
                     </el-table-column>
                 </el-table>
@@ -174,7 +180,34 @@
                 <el-button @click="dialogVisible = false">取 消</el-button>
                 <el-button type="primary" @click="modifyTime">确 定</el-button>
             </span>
+        </el-dialog>
 
+        <el-dialog
+            title="提示"
+            :visible.sync="addCommentDialog"
+            width="30%">
+            <el-input
+                type="textarea"
+                :autosize="{ minRows: 2, maxRows: 4}"
+                placeholder="请输入内容"
+                v-model="commentContent">
+            </el-input>
+            <el-upload
+                action="https://jsonplaceholder.typicode.com/posts/"
+                list-type="picture-card"
+                :on-success="uploadCommentImg"
+                :on-preview="handlePictureCardPreview"
+                :on-remove="handleRemove">
+                <i v-if="isShowAddImage" id="isShowAddImage" class="el-icon-plus"></i>
+            </el-upload>
+            <el-dialog :visible.sync="commentImgVisible">
+                <img width="100%" :src="dialogImageUrl" alt="">
+            </el-dialog>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="addCommentDialog = false">取消</el-button>
+                <el-button type="primary" @click="SaveComment">确定</el-button>
+            </span>
+            
         </el-dialog>
     </div>
 </template>
@@ -184,6 +217,8 @@ import moment from 'moment';
 import { Component, Vue ,Prop ,Watch ,Inject,Ref} from "vue-property-decorator";
 import { findSubscribeByUserHttp ,delSubscribeHttp ,updateRateHttp, findSubscribeByRoomIdHttp , ModifySubDateTimeHttp} from "@/axios/api";
 import { Message } from 'element-ui';
+
+
 
 @Component({
     computed:{
@@ -209,6 +244,47 @@ export default class MySubscribe extends Vue {
     dialogVisible = false
     value3 = ''
     value4 = ''
+    addCommentDialog = false
+    commentContent = ""  // 评论内容
+
+    dialogImageUrl= ""
+    commentImgVisible = false
+
+    isShowAddImage = true
+
+    addComment(){
+        this.addCommentDialog = true
+    }
+
+    SaveComment(){
+        this.addCommentDialog = false
+    }
+
+    handleRemove(file:any, fileList:any) {
+        console.log(file, fileList);
+        let dom:any = document.getElementById("isShowAddImage")
+        if(fileList.length<2){
+            dom.parentNode.style.display="inline-block"
+        }
+    }
+
+    uploadCommentImg(response:any, file:any, fileList:any){
+        let dom:any = document.getElementById("isShowAddImage")
+
+        if(fileList.length===3){
+            dom.parentNode.style.display="none"
+        }else{
+            dom.parentNode.style.display="inline-block"
+        }
+        console.log(response,file,fileList)
+        console.log("上传成功",fileList,fileList.length)
+    }
+
+    handlePictureCardPreview(file:any){
+        this.dialogImageUrl = file.url;
+        this.commentImgVisible = true;
+    }
+
 
     changeRate(index:any , value:any,){
         this.sourceDate[index].rate = value * 1

@@ -5,16 +5,20 @@ let instance = axios.create({
     baseURL: BaseUrl,
 })
 instance.interceptors.request.use((config) => {
+    config.withCredentials = true
     config.data = config.data || {}
     if (localStorage.loginId) {
         config.data.loginId = localStorage.loginId
     }
+    // config.xsrfHeaderName = null
+    console.log("config", config)
     return config
 }, (error) => {
     return Promise.reject(error);
 })
 
 instance.interceptors.response.use((response) => {
+    console.log("response", response.text)
     if (response.data.success === 1 && response.data.msg) {
         Message({
             type: "success",
@@ -29,10 +33,18 @@ instance.interceptors.response.use((response) => {
             duration: 3000
         })
     }
+
     return response.data;
 }, (error) => {
     return Promise.reject(error);
 });
+
+let getCaptchaHttp = () => {
+    return instance.get("/provider/captcha")
+}
+let validCaptchaHttp = (authCode) => {
+    return instance.post("/provider/validcaptcha",{authCode})
+}
 
 let registerHttp = (obj) => {
     return instance.post("/provider/register", obj)
@@ -50,8 +62,8 @@ let addStadiumHttp = (obj) => {
     return instance.post(`provider/addStadium`, obj)
 }
 
-let getStadiumHttp = (loginId) => {
-    return instance.get(`provider/getStadium?loginId=${loginId}`)
+let getStadiumHttp = () => {
+    return instance.post(`provider/getStadium`)
 }
 
 let alterStadiumHttp = (obj) => {
@@ -128,6 +140,7 @@ let getNoticeHttp = () => {
 
 
 export {
+    getCaptchaHttp, validCaptchaHttp,
     registerHttp, loginHttp, getLogInfoHttp, addStadiumHttp, getStadiumHttp, alterStadiumHttp, deleteStadiumHttp,
     getAllStadiumHttp, addSubscribeHttp, findAllSubscribeHttp, fetchAllStadiumHttp, findSubscribeByUserHttp,
     delSubscribeHttp, findSubscribeByRoomIdHttp, ModifySubDateTimeHttp, getPersonDetailHttp, modifyPersonalInfoHttp,

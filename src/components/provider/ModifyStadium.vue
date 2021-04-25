@@ -98,8 +98,7 @@ export default class ModifyStadium extends Vue {
     }
 
     initData() {
-        let loginId = localStorage.loginId
-        getStadiumHttp(loginId).then(res => {
+        getStadiumHttp().then(res => {
             this.sourceData = res.data
             console.log("this.sourceDate",this.sourceData)
         })

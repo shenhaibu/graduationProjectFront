@@ -7,23 +7,34 @@
             <div class="login">
                 <div class="log-con">
                     <span>登录</span>
-                    <input
-                        type="text"
-                        class="name"
-                        placeholder="请输入用户名"
-                    />
-                    <input
-                        type="text"
-                        class="password"
-                        placeholder="请输入密码"
-                    />
-                    <input
-                        type="text"
-                        class="code"
-                        placeholder="请输入验证码"
-                    />
-                    <input type="button" id="code" :value="authCode" @click="change()" />
-                    <button @click="jump">立即登录</button>
+                    <el-form :model="loginInfo" :rules="rules" ref="ruleForm">
+                        <el-form-item label="" class="formItem" prop="userName">
+                            <el-input v-model="loginInfo.userName" type="text" placeholder="请输入用户名"/> 
+                        </el-form-item>
+                        <el-form-item label="" class="formItem" prop="pwd">
+                            <el-input v-model="loginInfo.pwd" type="password" placeholder="请输入密码"/>
+                        </el-form-item>
+                        <el-form-item label="" class="formItem" prop="tel">
+                            <el-input v-model="loginInfo.tel" type="text" placeholder="请输入电话"/>
+                        </el-form-item>
+                        <el-form-item label="" class="formItem codeFormItem" prop="authCode">
+                            <el-input v-model="loginInfo.authCode" type="text" class="code" placeholder="请输入验证码"/>
+                            <img id="codeimg" :src="svgImg" alt="点击刷新" @click="changeSvg"/>
+                        </el-form-item>
+                        <el-form-item class="formItem">
+                            <div class="select-identity-wrap">
+                                <el-radio class="color-fff" v-model="loginInfo.loginType" label="0">用户0</el-radio>
+                                <el-radio class="color-fff" v-model="loginInfo.loginType" label="1">提供者1</el-radio>
+                                <el-radio class="color-fff" v-model="loginInfo.loginType" label="3">管理员3</el-radio>
+                            </div>
+                        </el-form-item>
+
+                        <div class="loginfo-bottom formItem">
+                            <el-button @click="loginFun">登录</el-button>
+                            <el-button v-if="isShowRegister" @click="registerFun">注册</el-button>
+                            <el-button @click="resetFun">重置</el-button>
+                        </div>
+                    </el-form>
                 </div>
             </div>
         </div>
@@ -34,6 +45,7 @@
 </template>
 
 <script>
+import { getCaptchaHttp, validCaptchaHttp, BaseUrl , loginHttp , registerHttp} from "../axios/api"
 
 var SEPARATION = 100, AMOUNTX = 60, AMOUNTY = 40;
 var container;
@@ -63,22 +75,118 @@ function render() {
             particle.scale.x = particle.scale.y = particle.scale.z = ((Math.sin((ix + count) * 0.3) + 1) * 4 + (Math.sin((iy + count) * 0.5) + 1) * 4) * 50;	//正常情况下再放大100倍*1200
         }
     }
-
     renderer.render(scene, camera);
     count += 0.1;
 }
 export default {
     data() {
         return {
-            authCode:""
+            isShowRegister:true,
+            svgImg: "",
+            BaseUrl: BaseUrl,
+            loginInfo: {
+                userName: "",
+                pwd: "",
+                tel:"",
+                loginType: "",
+                authCode: "",
+            },
+            rules:{
+                userName: [
+                    { required: true, message: "请输入用户名", trigger: "blur" },
+                ],
+                pwd: [{ required: true, message: "请输入密码", trigger: "blur" },
+                    {
+                        min: 6,
+                        message: "密码至少六位",
+                        trigger: "blur",
+                    },],
+                tel:[
+                    { required: true, message: "请输入电话", trigger: "blur" },
+                ],
+                loginType: [
+                    { type: "string",required: true,message: "请至少选择一种身份",trigger: "change",},
+                ],
+                authCode:[
+                    { type: "string",required: true,message: "请输入验证码",trigger: "blur"}
+                ]
+            }
+        }
+    },
+    watch:{
+        "loginInfo.loginType"(newVal,oldVal){
+            // 如果是管理员身份则不显示 注册 按钮
+            this.isShowRegister = newVal==3 ? false : true
         }
     },
     methods: {
-        jump() {
+        loginFun() {
+            this.$refs.ruleForm.validate((valid)=>{
+                // 先验证验证码是否正确
+                let { authCode } = this.loginInfo
+                validCaptchaHttp(authCode).then((res)=>{
+                    console.log("验证验证码",res)
+                    if(res.success===1){
+                        loginHttp(this.loginInfo)
+                        .then((res) => {
+                            localStorage.loginId = res.data.loginId;
+                            localStorage.loginType = this.loginInfo.loginType;
+                            console.log("登录成功 res", res);
+                            if (res.success !== 0 &&this.loginInfo.loginType == "1"){
+                                this.$router.push({name: 'AddStadium'});
+                            }
+
+                            if (res.success !== 0 &&this.loginInfo.loginType == "0") {
+                                this.$router.push({name: 'Subscribe'});
+                            }
+                        })
+                    }else{
+                        return
+                    }
+                })
+            })
+        },
+        registerFun() {
+            this.$refs.ruleForm.validate((valid) => {
+                if (valid) {
+                    let { authCode } = this.loginInfo
+                    validCaptchaHttp(authCode).then((res)=>{
+                        if(res.success===1){
+                            registerHttp(this.loginInfo).then((res) => {
+                                if (res.success !== 0 &&this.loginInfo.loginType == "1") {
+                                    localStorage.loginId = res.data.loginId 
+                                    this.$router.push("/provider");
+                                }
+                                if (res.success !== 0 &&this.loginInfo.loginType == "0") {
+                                    localStorage.loginId = res.data.loginId 
+                                    this.$router.push("/user");
+                                }
+                            })
+                        }
+                    })
+                } else {
+                    console.log("error submit!!");
+                    return false;
+                }
+            });
+        },
+        resetFun(){
+            this.loginInfo={
+                userName: "",
+                pwd: "",
+                tel:"",
+                loginType: "",
+                authCode: "",
+            }
+        },
+        changeSvg() {
+            this.svgImg = this.BaseUrl + "provider/captcha?" + 'mt=' + Math.random()
         },
         init() {
             container = document.createElement('div');	//创建容器
-            document.body.appendChild(container);			//将容器添加到页面上
+            console.log(document.getElementById("login-wrap"))
+            document.getElementById("login-wrap").appendChild(container);
+            // document.body.appendChild(container);			//将容器添加到页面上
             camera = new THREE.PerspectiveCamera(120, window.innerWidth / window.innerHeight, 1, 1500);		//创建透视相机设置相机角度大小等
             camera.position.set(0, 450, 2000);		//设置相机位置
 
@@ -125,7 +233,6 @@ export default {
                     context.fillStyle = rGrd;
                     context.arc(0, 0.25, 0.025, 0, PI2, true);    //绘制一个圆圈
                     context.fill();
-
                 }
             });
             //循环判断创建随机数选择创建粒子或者粒子条
@@ -135,11 +242,9 @@ export default {
                     var num = Math.random() - 0.1;
                     if (num > 0) {
                         particle = particles[i++] = new THREE.Particle(material);
-                        console.log("material")
                     }
                     else {
                         particle = particles[i++] = new THREE.Particle(materialY);
-                        console.log("materialY")
                     }
                     //particle = particles[ i ++ ] = new THREE.Particle( material );
                     particle.position.x = ix * SEPARATION - ((AMOUNTX * SEPARATION) / 2);
@@ -150,55 +255,28 @@ export default {
             renderer = new THREE.CanvasRenderer();
             renderer.setSize(window.innerWidth, window.innerHeight);
             container.appendChild(renderer.domElement);
-            //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-            //document.addEventListener( 'touchstart', onDocumentTouchStart, false );
-            //document.addEventListener( 'touchmove', onDocumentTouchMove, false );
             window.addEventListener('resize', onWindowResize, false);
         },
         animate() {
             requestAnimationFrame(this.animate);
             render();
         },
-        //验证码
-        change() {
-            console.log("验证码")
-            // code = $("#code");
-            // // 验证码组成库
-            var arrays = new Array(
-                '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
-                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-                'u', 'v', 'w', 'x', 'y', 'z',
-                'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-                'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-                'U', 'V', 'W', 'X', 'Y', 'Z'
-            );
-            // codes = '';// 重新初始化验证码
-            let codes =""
-            for (var i = 0; i < 4; i++) {
-                // 随机获取一个数组的下标
-                var r = parseInt(Math.random() * arrays.length);
-                codes += arrays[r];
-            }
-            // // 验证码添加到input里
-            // code.val(codes);
-            this.authCode = codes
-        }
     },
-    created() {
+
+    mounted(){
+        this.changeSvg() // 验证码
         this.init();		//初始化
         this.animate();	//动画效果
-        this.change();	//验证码
+        
     }
 }
 </script>
 
 <style>
-body {
+#login-wrap {
     margin: 0;
     overflow: hidden;
     background: linear-gradient(to bottom, #19778c, #095f88);
-    /* background: red; */
     background-size: 100% 100%;
     animation: dynamics 6s ease infinite;
     -webkit-animation: dynamics 6s ease infinite;
@@ -207,6 +285,7 @@ body {
     color: #ffffff;
     min-height: 700px;
 }
+*::-webkit-scrollbar { width: 0 !important }
 /*登录样式*/
 .main {
     position: fixed;
@@ -261,59 +340,47 @@ body {
     line-height: 24px;
     letter-spacing: 2px;
     display: block;
-    margin: 20px 0 44px 0;
+    margin: 20px 0 20px 0;
 }
 .log-con > span::after {
     display: block;
     content: "";
     width: 57px;
     height: 3px;
-    background: #ffffff;
-    margin-top: 16px;
+    background: #fff;
+    margin-top: 20px;
     justify-content: center;
     position: relative;
     left: 206px;
 }
-.log-con > input {
-    display: block;
-    margin: 10px 0 32px 70px;
+.log-con .loginfo-bottom {
     width: 330px;
-    height: 42px;
-    background-color: #ffffff;
-    border-radius: 4px;
-    opacity: 0.9;
-    border: 0;
-    font-size: 16px;
-    outline: none;
-    padding-left: 10px;
-    color: #000000;
-}
-.log-con > a {
-    width: 340px;
     height: 44px;
-    background-color: #0090ff;
     border-radius: 4px;
     display: block;
-    margin: 10px 0 0 70px;
+    margin: 10px 0 0px 70px;
     text-align: center;
     line-height: 44px;
     cursor: pointer;
     opacity: 1;
+    display: flex;
+    justify-content: space-between;
+}
+.login .select-identity-wrap{
+    width: 330px;
+    display: flex;
+    height: 44px;
+    align-items: center;
+    justify-content: space-between;
 }
 
 input::-webkit-input-placeholder {
     color: #000000;
     font-size: 16px;
 }
-.log-con > .code {
-    width: 216px;
-    display: inline-block;
-    margin-left: 6px;
-}
-.log-con > #code {
+
+.log-con #codeimg {
     width: 94px;
-    display: inline-block;
-    margin-left: 14px;
     cursor: pointer;
 }
 /*logo*/
@@ -324,7 +391,7 @@ input::-webkit-input-placeholder {
     left: 150px;
     top: 26px;
 }
-.logo > img {
+.logo img {
     max-width: 100%;
     max-height: 100%;
 }
@@ -336,6 +403,30 @@ input::-webkit-input-placeholder {
     display: block;
     width: 100%;
     text-align: center;
+}
+
+
+.color-fff{
+    color: #fff;
+}
+.formItem{
+    width: 330px;
+    height: 40px;
+    margin: auto;
+    vertical-align: middle;
+    margin: 10px 0 32px 70px;
+    border-radius: 4px;
+    opacity: 0.9;
+    border: 0;
+    font-size: 16px;
+    outline: none;
+}
+.codeFormItem{
+    display: flex;
+}
+.code{
+    width: 200px;
+    vertical-align: top;
 }
 </style>
 

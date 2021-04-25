@@ -3,6 +3,8 @@ import VueRouter, { RouteConfig } from 'vue-router'
 import { getLogInfoHttp } from "@/axios/api"
 import store from "@/store/index"
 
+import { isMobile } from "../utils"
+
 Vue.use(VueRouter)
 
 const routes = [
@@ -66,6 +68,9 @@ const routes = [
       {
         path: 'statistical',
         name: 'statistical',
+        function() {
+          console.log(1111)
+        },
         component: () => import(/* webpackChunkName: "Statistical" */ '../components/provider/Statistical.vue'),
       }
     ]
@@ -77,6 +82,7 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  console.log("isMobile isMobile isMobile", isMobile())
   let loginId = localStorage.loginId
   if (!loginId && to.name !== "LogIn") {
     next({ name: "LogIn" })
